@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhysicsCraft</title>
+  <meta name="description" content="A realistic 3D physics and chemistry sandbox: all 118 elements, water, fire, wind, reactions and explosions in a Japanese garden.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=102">
+</head>
+<body>
+  <header id="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" class="logo"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#b57bff"/></linearGradient></defs>
+        <g fill="none" stroke="url(#lg1)" stroke-width="2"><ellipse cx="16" cy="16" rx="13" ry="5"/><ellipse cx="16" cy="16" rx="13" ry="5" transform="rotate(60 16 16)"/><ellipse cx="16" cy="16" rx="13" ry="5" transform="rotate(-60 16 16)"/></g><circle cx="16" cy="16" r="3" fill="#ffcf5a"/></svg>
+      <div><div class="brand-name">PhysicsCraft</div><div class="brand-sub">3D Physics Lab</div></div>
+    </div>
+    <button class="proj-title" id="projBtn" title="All projects"><span id="projTitle"></span></button>
+    <div class="tb-group" id="tools"></div>
+    <div class="tb-group tb-sliders">
+      <label class="mini-slider" title="Tool radius"><span>Radius</span><input type="range" id="brushSize" min="0.05" max="1.5" step="0.01"><output id="brushOut"></output></label>
+      <button class="tb-btn accent" id="btnWind" title="Nature: weather, time of day, wind"></button>
+      <label class="mini-slider" title="Wind speed — 0 keeps water perfectly still"><span>Wind</span><input type="range" id="windSpeed" min="0" max="30" step="0.1"><output id="windOut"></output></label>
+    </div>
+    <div class="tb-group">
+      <button class="tb-btn" id="btnPlay" title="Pause / resume (P)"></button>
+      <button class="tb-btn" id="btnStep" title="Step one frame (.)"></button>
+      <select id="speedSel" class="tb-select" title="Simulation speed">
+        <option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="3">3×</option>
+      </select>
+    </div>
+    <div class="tb-group" id="histGroup">
+      <button class="tb-btn" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo"></button>
+      <button class="tb-btn" id="btnRedo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo"></button>
+      <button class="tb-btn" id="btnRewind" title="Rewind 5 seconds (R)" aria-label="Rewind"></button>
+      <button class="tb-btn" id="btnSave" title="Save project (Ctrl+S) · Export .physicslab (Ctrl+Shift+S)" aria-label="Save project"></button>
+      <button class="tb-btn" id="btnOpen" title="Import a .physicslab file (Ctrl+O)" aria-label="Import"></button>
+      <button class="tb-btn" id="btnRec" title="Record a video of the workspace" aria-label="Record video"></button>
+      <button class="tb-btn" id="btnSound" title="Sound on/off" aria-label="Sound"></button>
+      <button class="tb-btn" id="btnInstr" title="Instruments: thermometer, pH, pressure, scale (I)" aria-label="Instruments"></button>
+      <input type="file" id="sceneFile" accept=".physicslab,.json" hidden>
+    </div>
+    <div class="tb-group">
+      <select id="scenarioSel" class="tb-select" title="Load a demo scenario"><option value="">Scenarios…</option></select>
+      <button class="tb-btn" id="btnClear" title="Clear the workspace"></button>
+      <button class="tb-btn" id="btnShot" title="Save a screenshot"></button>
+      <button class="tb-btn" id="btnHelp" title="Controls (H)"></button>
+      <button class="tb-btn accent" id="btnSettings" title="Graphics &amp; simulation settings"></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div id="stage">
+      <canvas id="view"></canvas>
+      <div id="labels"></div>
+      <div id="screenFlash"></div>
+      <div id="hud"></div>
+      <div id="probe" class="hidden"></div>
+      <div id="zoomCtl">
+        <button id="zoomIn" title="Zoom in (+)">+</button>
+        <button id="zoomReset" title="Reset view (0)">⌂</button>
+        <button id="zoomOut" title="Zoom out (−)">−</button>
+      </div>
+      <div id="minimapWrap" title="Workspace overview — click or drag to move along it"><canvas id="minimap"></canvas></div>
+      <div id="toasts"></div>
+      <div id="pausedBadge" class="hidden">PAUSED</div>
+    </div>
+    <aside id="sidebar">
+      <div id="sbResize" title="Drag to resize"></div>
+      <div class="sb-head">
+        <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="search" type="search" placeholder="Search elements, materials… ( / )" autocomplete="off"></div>
+        <nav class="tabs" id="tabs">
+          <button data-tab="basics" class="active">Basics</button>
+          <button data-tab="periodic">Periodic</button>
+          <button data-tab="containers">Containers</button>
+          <button data-tab="discovered">Discovered <span id="discCount" class="pill">0</span></button>
+          <button data-tab="inventions">Inventions <span id="invCount" class="pill">0</span></button>
+          <button data-tab="web" title="Find any material on Earth or in space" class="tab-ico"></button>
+        </nav>
+      </div>
+      <div id="sbBody"></div>
+      <div class="sb-foot">Drag anything into the workspace · Click for properties</div>
+    </aside>
+  </main>
+
+  <section id="panel" class="panel hidden" aria-label="Properties"></section>
+  <section id="settings" class="drawer hidden" aria-label="Settings"></section>
+  <section id="nature" class="drawer hidden" aria-label="Nature"></section>
+  <section id="help" class="modal hidden" aria-label="Help"></section>
+  <div id="tooltip" class="hidden"></div>
+  <div id="ghost" class="hidden"></div>
+  <div id="loading"><div class="ld-card"><div class="ld-title">PhysicsCraft</div><div class="ld-msg">Loading the 3D engine…</div><div class="ld-bar"><i></i></div></div></div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+      "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+    }
+  }
+  </script>
+  <script type="module">
+    // Loads the 3D libraries and exposes them to the classic scripts below.
+    try {
+      const THREE = await import('three');
+      const [oc, rgbe, gltf, gsky, sky, room, comp, texp, bloom, outp, smaa, rbox, mcubes, stl, skel, CANNON] = await Promise.all([
+        import('three/addons/controls/OrbitControls.js'), import('three/addons/loaders/RGBELoader.js'),
+        import('three/addons/loaders/GLTFLoader.js'), import('three/addons/objects/GroundedSkybox.js'),
+        import('three/addons/objects/Sky.js'), import('three/addons/environments/RoomEnvironment.js'),
+        import('three/addons/postprocessing/EffectComposer.js'), import('three/addons/postprocessing/TexturePass.js'),
+        import('three/addons/postprocessing/UnrealBloomPass.js'), import('three/addons/postprocessing/OutputPass.js'),
+        import('three/addons/postprocessing/SMAAPass.js'), import('three/addons/geometries/RoundedBoxGeometry.js'),
+        import('three/addons/objects/MarchingCubes.js'), import('three/addons/loaders/STLLoader.js'), import('three/addons/utils/SkeletonUtils.js'), import('cannon-es'),
+      ]);
+      window.THREE = THREE;
+      window.CANNON = CANNON;
+      window.THREE_ADDONS = {
+        OrbitControls: oc.OrbitControls, RGBELoader: rgbe.RGBELoader, GLTFLoader: gltf.GLTFLoader, GroundedSkybox: gsky.GroundedSkybox,
+        Sky: sky.Sky, RoomEnvironment: room.RoomEnvironment, EffectComposer: comp.EffectComposer, TexturePass: texp.TexturePass,
+        UnrealBloomPass: bloom.UnrealBloomPass, OutputPass: outp.OutputPass, SMAAPass: smaa.SMAAPass, RoundedBoxGeometry: rbox.RoundedBoxGeometry, MarchingCubes: mcubes.MarchingCubes, STLLoader: stl.STLLoader, SkeletonUtils: skel,
+      };
+      window.__libsReady = true;
+      window.dispatchEvent(new Event('libs-ready'));
+    } catch (err) {
+      console.error(err);
+      window.dispatchEvent(new Event('libs-failed'));
+    }
+  </script>
+  <script src="js/core/elements.js?v=102"></script>
+  <script src="js/core/materials.js?v=102"></script>
+  <script src="js/core/reactions.js?v=102"></script>
+  <script src="js/core/models.js?v=102"></script>
+  <script src="js/core/fluid.js?v=102"></script>
+  <script src="js/core/bodies.js?v=102"></script>
+  <script src="js/core/websearch.js?v=102"></script>
+    <script src="js/core/inventions.js?v=102"></script>
+    <script src="js/core/snapshot.js?v=102"></script>
+    <script src="js/core/sim.js?v=102"></script>
+  <script src="js/render/textures.js?v=102"></script>
+  <script src="js/render/grains.js?v=102"></script>
+  <script src="js/render/modelkit.js?v=102"></script>
+  <script src="js/render/weather.js?v=102"></script>
+  <script src="js/render/piles.js?v=102"></script>
+    <script src="js/render/audio.js?v=102"></script>
+    <script src="js/render/fluidfx.js?v=102"></script>
+  <script src="js/render/view3d.js?v=102"></script>
+  <script src="js/render/icons3d.js?v=102"></script>
+  <script src="js/ui/icons.js?v=102"></script>
+  <script src="js/ui/atom.js?v=102"></script>
+  <script src="js/ui/instruments.js?v=102"></script>
+    <script src="js/ui/onboarding.js?v=102"></script>
+    <script src="js/ui/projects.js?v=102"></script>
+    <script src="js/ui/ui.js?v=102"></script>
+  <script src="js/main.js?v=102"></script>
+</body>
+</html>
