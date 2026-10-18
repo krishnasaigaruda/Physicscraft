@@ -173,7 +173,7 @@
     const cands = [];
     for (const m of r.results || []) {
       const path = paths[m.uid];
-      if (!path) continue; // newer than the mirror
+      if (!path || !PC.licenseOK(m.license && m.license.label)) continue; // newer than the mirror, or licence not allowed
       const glb = m.archives && m.archives.glb;
       if (glb && (glb.size > 25e6 || glb.faceCount > 300e3)) continue;
       // The model's own name must say what it is (tags are too loose: a fan-art scene tagged “printer”).
@@ -204,6 +204,10 @@
     return best;
   };
 
+  // Only licences that allow use on any website (commercial too) with modification: CC0, CC BY, CC BY-SA.
+  // NonCommercial and NoDerivs models are never offered.
+  PC.licenseOK = (label) => /^(CC Attribution|CC Attribution-ShareAlike|CC0 Public Domain)$/.test(label || '');
+
   // ---------------------------------------------------------------- model search (what the Search tab shows)
   // Real 3D models matching a query: Poly Haven scans first, then Sketchfab models that Objaverse can serve.
   PC.searchModels = async function (q) {
@@ -226,7 +230,7 @@
     try { paths = await PC.objaverseIndex(); } catch (e) { /* none */ }
     for (const m of res) {
       const path = paths[m.uid], glb = m.archives && m.archives.glb;
-      if (!path || (glb && (glb.size > 25e6 || glb.faceCount > 300e3))) continue;
+      if (!path || (glb && (glb.size > 25e6 || glb.faceCount > 300e3)) || !PC.licenseOK(m.license && m.license.label)) continue;
       out.push({ source: 'sketchfab', glb: OBJ + path, uid: m.uid, name: m.name, author: m.user.displayName || m.user.username, authorUrl: m.user.profileUrl, license: m.license ? m.license.label : 'CC', url: m.viewerUrl, likes: m.likeCount || 0, thumb: m.thumbnails && m.thumbnails.images && (m.thumbnails.images.find((i) => i.width >= 200 && i.width <= 720) || m.thumbnails.images[0]).url });
     }
     // Models whose own name contains the searched words first (Sketchfab also matches tags loosely).

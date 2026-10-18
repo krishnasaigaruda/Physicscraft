@@ -63,7 +63,7 @@
         <header class="home-head">
           <div class="home-brand"><svg viewBox="0 0 32 32" class="logo"><g fill="none" stroke="#7cc4ff" stroke-width="2"><ellipse cx="16" cy="16" rx="13" ry="5"/><ellipse cx="16" cy="16" rx="13" ry="5" transform="rotate(60 16 16)"/><ellipse cx="16" cy="16" rx="13" ry="5" transform="rotate(-60 16 16)"/></g><circle cx="16" cy="16" r="3" fill="#ffcf5a"/></svg>
             <div><h1>PhysicsCraft</h1><p>3D physics &amp; chemistry lab</p></div></div>
-          <div class="home-actions"><button class="btn" data-import>${PC.ico('open')} Import .physicslab</button><button class="btn primary" data-new>New project</button></div>
+          <div class="home-actions"><button class="btn" data-credits>Credits</button><button class="btn" data-import>${PC.ico('open')} Import .physicslab</button><button class="btn primary" data-new>New project</button></div>
         </header>
         ${first ? `<section class="home-welcome"><h2>Welcome</h2><p>Start by creating your first project — give it a name and pick a starting point. A short tour will show you around.</p><button class="btn primary big" data-new>Create your first project</button></section>` : ''}
         <section class="home-grid">${list.map((p) => `
@@ -82,6 +82,7 @@
       this.el.classList.remove('hidden');
       const q = (s) => this.el.querySelectorAll(s);
       for (const b of q('[data-new]')) b.onclick = () => this.newDialog();
+      this.el.querySelector('[data-credits]').onclick = () => this.creditsDialog();
       for (const b of q('[data-open]')) b.onclick = () => this.open(b.dataset.open);
       for (const b of q('[data-rename]')) b.onclick = () => this.renameDialog(b.dataset.rename);
       for (const b of q('[data-dup]')) b.onclick = () => this.duplicate(b.dataset.dup);
@@ -116,6 +117,50 @@
         name.onkeydown = (e) => { if (e.key === 'Enter') go(); };
       });
     }
+    creditsDialog() {
+      const L = (href, text) => `<a href="${href}" target="_blank" rel="noopener">${esc(text)}</a>`;
+      const row = (name, what, lic, link) => `<tr><td><b>${name}</b><div class="cr-what">${what}</div></td><td>${lic}</td><td>${link}</td></tr>`;
+      // 3D models the user has added from Search (each needs its author credited).
+      const mine = (this.ui.customs || []).map((c) => {
+        if (c.sf) return { name: c.sf.name, by: c.sf.author, lic: c.sf.license, url: c.sf.url, ok: PC.licenseOK(c.sf.license) };
+        if (c.model) return { name: c.label, by: 'Poly Haven', lic: 'CC0', url: 'https://polyhaven.com/a/' + c.model, ok: true };
+        if (c.stl) return { name: c.stl.title, by: 'Wikimedia Commons contributor', lic: 'See file page', url: c.stl.page, ok: true };
+        return null;
+      }).filter(Boolean);
+      this.modal(`<h2>Credits</h2>
+        <p class="cr-intro">PhysicsCraft is built on these open-source libraries and openly licensed assets. Every one of them allows use on a public website, including commercial use, as long as the credit below is kept.</p>
+        <div class="cr-scroll">
+        <h3>Software</h3>
+        <table class="cr"><tbody>
+          ${row('three.js r170', '3D rendering engine and add-ons (loaders, post-processing, controls)', 'MIT License', L('https://github.com/mrdoob/three.js/blob/dev/LICENSE', 'Copyright © 2010–2024 three.js authors'))}
+          ${row('cannon-es 0.20', 'Rigid-body physics', 'MIT License', L('https://github.com/pmndrs/cannon-es/blob/master/LICENSE', 'Copyright © 2020 pmndrs; © 2015 Stefan Hedman'))}
+          ${row('jsDelivr', 'Free CDN that serves the libraries and character models', 'Free open-source CDN', L('https://www.jsdelivr.com/terms', 'Terms'))}
+        </tbody></table>
+        <h3>Fonts</h3>
+        <table class="cr"><tbody>
+          ${row('Inter', 'Interface font, by Rasmus Andersson', 'SIL Open Font License 1.1', L('https://fonts.google.com/specimen/Inter/license', 'Google Fonts'))}
+          ${row('JetBrains Mono', 'Numbers and readouts, by JetBrains', 'SIL Open Font License 1.1', L('https://fonts.google.com/specimen/JetBrains+Mono/license', 'Google Fonts'))}
+        </tbody></table>
+        <h3>3D assets, textures and environment</h3>
+        <table class="cr"><tbody>
+          ${row('Poly Haven', 'Garden HDRI sky (Chinese Garden), PBR textures, rocks, plants and scanned objects', 'CC0 (public domain)', L('https://polyhaven.com/license', 'polyhaven.com'))}
+          ${row('Soldier &amp; X Bot characters', 'Rigged human and crash-test mannequin, from Adobe Mixamo, via the three.js examples', 'Mixamo terms: royalty-free use in projects, including commercial', L('https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html', 'Mixamo FAQ'))}
+          ${row('Sketchfab community models', 'Models you add from Search (listed below with their authors)', 'Only CC BY, CC BY-SA and CC0 are offered', L('https://sketchfab.com/licenses', 'Sketchfab licences'))}
+          ${row('Objaverse', 'Open mirror that serves the Sketchfab model files (Allen Institute for AI)', 'ODC-By 1.0 dataset; each model keeps its own licence', L('https://huggingface.co/datasets/allenai/objaverse', 'Hugging Face'))}
+          ${row('Wikimedia Commons', '3D scans of specimens (meteorites, fossils, minerals)', 'Each file’s own free licence', L('https://commons.wikimedia.org/wiki/Commons:Licensing', 'Commons licensing'))}
+        </tbody></table>
+        <h3>Data</h3>
+        <table class="cr"><tbody>
+          ${row('Wikidata', 'Physical properties of searched materials', 'CC0 (public domain)', L('https://www.wikidata.org/wiki/Wikidata:Licensing', 'wikidata.org'))}
+          ${row('Wikipedia', 'Descriptions and photos shown in material panels (each panel links its source article)', 'Text CC BY-SA 4.0; images under their own licences', L('https://en.wikipedia.org/wiki/Wikipedia:Text_of_the_Creative_Commons_Attribution-ShareAlike_4.0_International_License', 'CC BY-SA 4.0'))}
+          ${row('Periodic table data', 'Element masses, densities, melting and boiling points (public scientific data)', 'Facts are not copyrightable', '—')}
+        </tbody></table>
+        <h3>3D models you added (${mine.length})</h3>
+        ${mine.length ? `<table class="cr"><tbody>${mine.map((m) => row(esc(m.name), 'by ' + esc(m.by), esc(m.lic) + (m.ok ? '' : ' <span class="cr-bad">not allowed on a public site — remove this model</span>'), L(m.url, 'Source'))).join('')}</tbody></table>` : '<p class="cr-what">None yet. Models you add from Search are credited here and when you hover over them.</p>'}
+        </div>
+        <div class="btns"><button class="btn primary" data-cancel>Close</button></div>`, (m, close) => { m.querySelector('[data-cancel]').onclick = close; m.querySelector('.home-card').classList.add('wide'); });
+    }
+
     async renameDialog(id) {
       const p = await get(id);
       this.modal(`<h2>Rename project</h2><label class="fld"><span>Name</span><input type="text" id="projName" maxlength="60" value="${esc(p.name)}"></label>

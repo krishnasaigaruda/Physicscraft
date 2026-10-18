@@ -191,6 +191,7 @@
       try { this.customs = JSON.parse(localStorage.getItem('pc.custom3d') || '[]').filter((c) => c && c.key && PC.MAT[c.mat]); } catch (e) { this.customs = []; }
       const capLim = Math.min(this.s.worldWidth, this.s.worldDepth) / 2 * 0.85;
       for (const c of this.customs) if (c.modelDims) { const m = Math.max(c.modelDims[0], c.modelDims[2], c.modelDims[1] / 1.5); if (m > capLim) c.modelDims = c.modelDims.map((v) => v * capLim / m); }
+      for (const c of this.customs) if (c.sf && c.sf.alts && PC.licenseOK) c.sf.alts = c.sf.alts.filter((x) => PC.licenseOK(x.license)); // only freely usable models to switch to
       for (const c of this.customs) { if (c.cls === 'gas' && c.props && c.props.opacity === 1) c.props.opacity = 0.12; PC.CUSTOM[c.key] = c; }
       this.entryByKey = {};
       for (const e of [...this.basics, ...this.elements, ...this.containers, ...this.compounds, ...this.inventions, ...this.customs, ...this.extras]) this.entryByKey[e.key] = e;
