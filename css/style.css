@@ -536,3 +536,70 @@ svg.ico { width: 1.15em; height: 1.15em; vertical-align: -0.2em; flex: none; }
 #home table.cr { table-layout: fixed; }
 #home table.cr td:nth-child(2) { width: 30%; }
 #home table.cr td:nth-child(3) { width: 28%; overflow-wrap: anywhere; }
+
+/* ===================== Touch devices (phones, tablets) ===================== */
+html, body { overscroll-behavior: none; }
+button, .card, .list-row, .model-card { touch-action: manipulation; }
+.card, .list-row { -webkit-touch-callout: none; -webkit-user-select: none; }
+#touchBar { display: none; }
+body.touch #touchBar { display: flex; position: absolute; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); gap: 8px; z-index: 9; }
+.fab { height: 44px; padding: 0 16px; border-radius: 22px; border: 1px solid var(--line-2); background: rgba(14, 20, 36, .9); color: var(--text); font-weight: 700; font-size: 14px; backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0, 0, 0, .4); }
+.fab.primary { background: linear-gradient(135deg, #3f8cff, #8a5cff); border-color: transparent; color: #fff; }
+.fab.active { border-color: var(--accent); background: rgba(124, 196, 255, .25); color: #fff; }
+/* Tablets keep the desktop layout; the Add button isn't needed there (the sidebar is visible). */
+body.touch #fabAdd { display: none; }
+body.touch .card, body.touch .list-row, body.touch .model-card { touch-action: pan-y; }
+body.touch .tb-btn { min-width: 40px; height: 40px; }
+body.touch #probe { display: none !important; }
+body.touch #zoomCtl button { width: 40px; height: 36px; }
+body.touch #minimapWrap { left: auto; right: 12px; width: min(260px, 40vw); bottom: calc(14px + env(safe-area-inset-bottom)); }
+
+/* ===================== Phones (and short landscape screens) ===================== */
+@media (max-width: 760px), (max-height: 500px) {
+  :root { --topbar: 52px; }
+  #topbar { gap: 4px; padding: 0 6px; padding-left: max(6px, env(safe-area-inset-left)); padding-right: max(6px, env(safe-area-inset-right)); }
+  .brand-name, .brand-sub, .tb-sliders, #scenarioSel { display: none !important; }
+  .brand { padding-right: 0; }
+  .proj-title { max-width: 110px; font-size: 12px; }
+  .tb-group { padding: 0 4px; gap: 2px; }
+  .tb-btn .kbd, .tool-btn .kbd { display: none; }
+  #hud { display: none; }
+  #minimapWrap { display: none; }
+  body.touch #fabAdd { display: inline-flex; align-items: center; }
+
+  /* Materials sidebar → bottom sheet */
+  #sidebar { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; width: auto !important; max-width: none; min-width: 0; height: min(62vh, 560px);
+    border-left: 0; border-top: 1px solid var(--line-2); border-radius: 18px 18px 0 0; z-index: 40; transform: translateY(105%) !important; transition: transform .28s cubic-bezier(.2, .9, .3, 1);
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, .5); padding-bottom: env(safe-area-inset-bottom); }
+  body.sheet-open #sidebar { transform: none !important; }
+  #sbResize { display: none; }
+  #sidebar .sb-head { padding-top: 18px; position: relative; }
+  #sidebar .sb-head::before { content: ""; position: absolute; top: 7px; left: 50%; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--line-2); }
+  .sb-foot { display: none; }
+  .cards { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+  .tabs button { font-size: 12.5px; padding: 10px 6px; }
+
+  /* Properties panel, settings, nature → bottom sheets */
+  .panel, .drawer { left: 0 !important; right: 0 !important; top: auto !important; bottom: 0 !important; width: auto !important; min-width: 0 !important;
+    max-height: 70vh; height: 70vh; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom); animation: sheetUp .28s cubic-bezier(.2, .9, .3, 1); z-index: 45; }
+  @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  #instruments { left: 0; right: 0; bottom: 0; width: auto; max-height: 65vh; border-radius: 18px 18px 0 0; z-index: 44; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  .p-head { padding: 12px 44px 12px 12px; }
+  .p-close, .d-head .p-close { width: 36px; height: 36px; font-size: 22px; }
+
+  /* Modals & home */
+  .modal-card { width: calc(100vw - 16px); max-height: calc(100vh - 24px); padding: 18px 16px; border-radius: 16px; }
+  .help-grid { grid-template-columns: 1fr; }
+  #home .home-wrap { padding: 20px 14px 40px; padding-top: max(20px, env(safe-area-inset-top)); }
+  #home h1 { font-size: 22px; }
+  #home .home-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  #home .home-card { padding: 16px 14px; }
+  #toasts { top: 8px; width: calc(100vw - 24px); }
+  .toast { max-width: 100%; }
+  #tour .tour-card { left: 12px !important; right: 12px; width: auto !important; top: auto !important; bottom: calc(12px + env(safe-area-inset-bottom)); }
+}
+/* Very small phones */
+@media (max-width: 380px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+  .model-grid { grid-template-columns: 1fr 1fr; }
+}

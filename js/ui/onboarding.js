@@ -45,7 +45,10 @@
     start() { this.i = 0; this.el.classList.remove('hidden'); this.show(); }
     end() { this.el.classList.add('hidden'); try { localStorage.setItem('pc.tourDone', '1'); } catch (e) { /* ignore */ } }
     show() {
-      const st = STEPS[this.i], t = document.querySelector(st.sel);
+      const st = STEPS[this.i];
+      // On phones the materials live in a bottom sheet: open it for the steps that point at it.
+      if (this.ui.isPhone && this.ui.isPhone()) document.body.classList.toggle('sheet-open', /sbBody|tabs/.test(st.sel));
+      const t = document.querySelector(st.sel);
       const hole = this.el.querySelector('.tour-hole'), card = this.el.querySelector('.tour-card');
       const r = t ? t.getBoundingClientRect() : { left: innerWidth / 2 - 100, top: innerHeight / 2 - 50, width: 200, height: 100 };
       const pad = 6;

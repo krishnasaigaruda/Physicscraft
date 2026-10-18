@@ -169,6 +169,7 @@
       $('#sidebar').addEventListener('pointerdown', (e) => { if (e.pointerType === 'touch' && innerWidth <= 640) $('#sidebar').classList.add('open'); });
       this.app.canvas.addEventListener('pointerdown', () => $('#sidebar').classList.remove('open'));
       this.onboarding = new PC.Onboarding(this);
+      this.setupTouch();
       this.projects = new PC.Projects(this);
       this.renderHelp();
       $('#help').classList.add('hidden'); // the home screen comes first; Help is one click (H) away
@@ -802,7 +803,8 @@
     attachDrag(node, entry) {
       node.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
-        e.preventDefault();
+        const touch = e.pointerType !== 'mouse';
+        if (!touch) e.preventDefault(); // touch: let vertical swipes scroll the list (cards are touch-action: pan-y)
         const x0 = e.clientX, y0 = e.clientY;
         let dragging = false;
         const ghost = $('#ghost');
@@ -822,8 +824,10 @@
             if (this.dragging) { const p = this.local(ev); this.mouse.sx = p.sx; this.mouse.sy = p.sy; this.mouse.over = true; this.mouse.moved = true; }
           }
         };
+        const cancel = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel); ghost.classList.add('hidden'); document.body.classList.remove('dragging'); this.dragging = false; };
+        window.addEventListener('pointercancel', cancel);
         const up = (ev) => {
-          window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', cancel);
           ghost.classList.add('hidden');
           document.body.classList.remove('dragging');
           this.dragging = false;
@@ -833,11 +837,40 @@
               const hit = this.view.raycast(p.sx, p.sy, { noParticles: entry.kind === 'container' });
               if (hit) this.drop(entry, hit.point);
             }
-          } else this.openMaterial(entry);
+          } else if (touch && this.isPhone()) this.tapAdd(entry);
+          else this.openMaterial(entry);
         };
         window.addEventListener('pointermove', move);
         window.addEventListener('pointerup', up);
       });
+    }
+    // Phones: tapping a card drops it in the middle of the view and closes the sheet.
+    isPhone() { return window.matchMedia('(max-width: 760px), (max-height: 500px)').matches; }
+    tapAdd(entry) {
+      if (entry.kind === 'container') { const t = this.view.controls.target; this.drop(entry, [t.x, 0, t.z]); }
+      else { const hit = this.view.raycast(this.view.cssW / 2, this.view.cssH / 2, { noParticles: entry.kind === 'container' }); const t = this.view.controls.target; this.drop(entry, hit ? hit.point : [t.x, 0.3, t.z]); }
+      document.body.classList.remove('sheet-open');
+      this.toast({ title: 'Added', name: entry.label, sub: 'Tap it to change its properties', info: true });
+    }
+    setupTouch() {
+      const body = document.body, coarse = window.matchMedia('(pointer: coarse)').matches;
+      body.classList.toggle('touch', coarse || navigator.maxTouchPoints > 0);
+      $('#fabAdd').onclick = () => body.classList.toggle('sheet-open');
+      const cam = $('#fabCam'), T = this.view.THREE, ctl = this.view.controls;
+      // Camera mode: one finger orbits, two fingers pan and zoom. Otherwise one finger uses the current tool.
+      const sync = () => {
+        cam.classList.toggle('active', !!this.camMode); cam.setAttribute('aria-pressed', !!this.camMode);
+        ctl.touches = this.camMode ? { ONE: T.TOUCH.ROTATE, TWO: T.TOUCH.DOLLY_PAN } : { ONE: null, TWO: T.TOUCH.DOLLY_ROTATE };
+      };
+      cam.onclick = () => { this.camMode = !this.camMode; sync(); };
+      sync();
+      // Tapping the workspace closes the add sheet on phones.
+      this.app.canvas.addEventListener('pointerdown', () => body.classList.remove('sheet-open'));
+      // Swipe the sheet's handle down to close it.
+      const head = document.querySelector('#sidebar .sb-head');
+      let y0 = null;
+      head.addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+      head.addEventListener('touchmove', (e) => { if (y0 != null && e.touches[0].clientY - y0 > 60) { body.classList.remove('sheet-open'); y0 = null; } }, { passive: true });
     }
     overCanvas(ev) {
       const r = this.app.canvas.getBoundingClientRect();
@@ -871,6 +904,7 @@
         const p = this.local(e);
         this.mouse.sx = p.sx; this.mouse.sy = p.sy;
         if (e.button !== 0) return;
+        if (this.camMode && e.pointerType !== 'mouse') return; // camera mode: fingers move the view, not the tool
         if (this.instruments && this.instruments.placing) { this.instruments.handleClick(this.view.raycast(p.sx, p.sy)); return; }
         cv.setPointerCapture(e.pointerId);
         this.mark(this.sim.input.tool);
