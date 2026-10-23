@@ -210,13 +210,15 @@
 
   // ---------------------------------------------------------------- model search (what the Search tab shows)
   // Real 3D models matching a query: Poly Haven scans first, then Sketchfab models that Objaverse can serve.
+  // Whole words only, allowing plurals: “car” matches “cars” but not “cart”, “cardboard” or “carved”.
+  const sameWord = (x, w) => x === w || x === w + 's' || x === w + 'es' || (w.endsWith('s') && x === w.slice(0, -1));
   PC.searchModels = async function (q) {
     const out = [], qw = words(q);
     try {
       const idx = await polyHavenIndex();
       for (const id in idx.models) {
         const a = idx.models[id], nw = words(a.name + ' ' + id + ' ' + (a.tags || []).join(' '));
-        if (qw.length && qw.every((w) => nw.some((x) => x === w || x === w + 's' || x.startsWith(w)))) out.push({ source: 'polyhaven', id, uid: 'ph_' + id, name: a.name, author: (Object.keys(a.authors || {})[0]) || 'Poly Haven', license: 'CC0', url: 'https://polyhaven.com/a/' + id, thumb: `https://cdn.polyhaven.com/asset_img/thumbs/${id}.png?width=256&height=256` });
+        if (qw.length && qw.every((w) => nw.some((x) => sameWord(x, w)))) out.push({ source: 'polyhaven', id, uid: 'ph_' + id, name: a.name, author: (Object.keys(a.authors || {})[0]) || 'Poly Haven', license: 'CC0', url: 'https://polyhaven.com/a/' + id, thumb: `https://cdn.polyhaven.com/asset_img/thumbs/${id}.png?width=256&height=256` });
       }
     } catch (e) { /* Poly Haven optional */ }
     let res = [];
@@ -234,7 +236,7 @@
       out.push({ source: 'sketchfab', glb: OBJ + path, uid: m.uid, name: m.name, author: m.user.displayName || m.user.username, authorUrl: m.user.profileUrl, license: m.license ? m.license.label : 'CC', url: m.viewerUrl, likes: m.likeCount || 0, thumb: m.thumbnails && m.thumbnails.images && (m.thumbnails.images.find((i) => i.width >= 200 && i.width <= 720) || m.thumbnails.images[0]).url });
     }
     // Models whose own name contains the searched words first (Sketchfab also matches tags loosely).
-    const named = (m) => { const nw = words(m.name); return qw.filter((w) => nw.some((x) => x === w || x === w + 's' || x.startsWith(w))).length / Math.max(1, qw.length); };
+    const named = (m) => { const nw = words(m.name); return qw.filter((w) => nw.some((x) => sameWord(x, w))).length / Math.max(1, qw.length); };
     out.forEach((m, k) => { m._r = named(m) * 100 - k; });
     out.sort((a, b) => b._r - a._r);
     return out.slice(0, 24);

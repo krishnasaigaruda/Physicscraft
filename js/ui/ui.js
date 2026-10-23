@@ -817,6 +817,8 @@
             ghost.dataset.label = entry.label;
             ghost.classList.remove('hidden');
             document.body.classList.add('dragging');
+            document.body.classList.remove('sheet-open'); // the bottom sheet would cover the drop spot
+            $('#sidebar').classList.remove('open');
           }
           if (dragging) {
             ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
@@ -837,7 +839,7 @@
               const hit = this.view.raycast(p.sx, p.sy, { noParticles: entry.kind === 'container' });
               if (hit) this.drop(entry, hit.point);
             }
-          } else if (touch && this.isPhone()) this.tapAdd(entry);
+          } else if (this.isPhone()) this.tapAdd(entry);
           else this.openMaterial(entry);
         };
         window.addEventListener('pointermove', move);
@@ -845,7 +847,7 @@
       });
     }
     // Phones: tapping a card drops it in the middle of the view and closes the sheet.
-    isPhone() { return window.matchMedia('(max-width: 760px), (max-height: 500px)').matches; }
+    isPhone() { return window.matchMedia('(max-width: 760px), (max-height: 500px) and (pointer: coarse)').matches; }
     tapAdd(entry) {
       if (entry.kind === 'container') { const t = this.view.controls.target; this.drop(entry, [t.x, 0, t.z]); }
       else { const hit = this.view.raycast(this.view.cssW / 2, this.view.cssH / 2, { noParticles: entry.kind === 'container' }); const t = this.view.controls.target; this.drop(entry, hit ? hit.point : [t.x, 0.3, t.z]); }

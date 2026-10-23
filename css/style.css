@@ -555,7 +555,7 @@ body.touch #zoomCtl button { width: 40px; height: 36px; }
 body.touch #minimapWrap { left: auto; right: 12px; width: min(260px, 40vw); bottom: calc(14px + env(safe-area-inset-bottom)); }
 
 /* ===================== Phones (and short landscape screens) ===================== */
-@media (max-width: 760px), (max-height: 500px) {
+@media (max-width: 760px), (max-height: 500px) and (pointer: coarse) {
   :root { --topbar: 52px; }
   #topbar { gap: 4px; padding: 0 6px; padding-left: max(6px, env(safe-area-inset-left)); padding-right: max(6px, env(safe-area-inset-right)); }
   .brand-name, .brand-sub, .tb-sliders, #scenarioSel { display: none !important; }
@@ -565,7 +565,10 @@ body.touch #minimapWrap { left: auto; right: 12px; width: min(260px, 40vw); bott
   .tb-btn .kbd, .tool-btn .kbd { display: none; }
   #hud { display: none; }
   #minimapWrap { display: none; }
-  body.touch #fabAdd { display: inline-flex; align-items: center; }
+  /* The sheet's Add button is shown with a mouse too (a narrow desktop window), or there'd be no way to open it. */
+  #touchBar { display: flex; position: absolute; left: 12px; bottom: calc(14px + env(safe-area-inset-bottom)); gap: 8px; z-index: 9; }
+  #fabAdd, body.touch #fabAdd { display: inline-flex; align-items: center; }
+  body:not(.touch) #fabCam { display: none; }
 
   /* Materials sidebar → bottom sheet */
   #sidebar { position: fixed !important; left: 0; right: 0; bottom: 0; top: auto; width: auto !important; max-width: none; min-width: 0; height: min(62vh, 560px);
